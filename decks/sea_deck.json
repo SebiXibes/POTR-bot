@@ -1,0 +1,26 @@
+{
+    "type": "sea_deck",
+    "original_name": "Sea Deck-WM",
+    "cards": [
+        {
+            "name": "Plague!",
+            "image": "Cards\\457ec81b-86e4-468c-82e0-2116c23582e1_wm_plauge.png"
+        },
+        {
+            "name": "Crab Infestation!",
+            "image": "Cards\\bce58985-75dc-4e6c-acef-e1a0ba97d545_wm_crab_infestation.png"
+        },
+        {
+            "name": "Seafarers!",
+            "image": "Cards\\5b3aba5b-8ed5-48bd-8d8f-78aa27e05bf0_wm_seafarers.png"
+        },
+        {
+            "name": "Ferry!",
+            "image": "Cards\\d4ae5047-5e7e-4e51-bb90-7c8b8f03e88a_wm_ferry.png"
+        },
+        {
+            "name": "Merchant Ships!",
+            "image": "Cards\\ba67c095-7312-47af-b84a-c73726de8c32_wm_merchant_ships.png"
+        }
+    ]
+}

@@ -1,0 +1,34 @@
+{
+    "type": "dragon_deck",
+    "original_name": "Dragon Deck-WM",
+    "cards": [
+        {
+            "name": "There be Dragons!",
+            "image": "Cards\\e2806678-5f7b-40c6-92b2-0a92b54f69bf_therebedragons_therebedragons.png"
+        },
+        {
+            "name": "There be Dragons!",
+            "image": "Cards\\e2806678-5f7b-40c6-92b2-0a92b54f69bf_therebedragons_therebedragons.png"
+        },
+        {
+            "name": "The Misty Mountains Cold",
+            "image": "Cards\\7dc55a56-a185-47a0-8ecb-b372a4b4ad43_therebedragons_mistymountainscold.png"
+        },
+        {
+            "name": "The Misty Mountains Cold",
+            "image": "Cards\\a4d58521-a70d-4fcd-8355-c06c05e21c8a_therebedragons_mistymountainscold.png"
+        },
+        {
+            "name": "The Misty Mountains Cold",
+            "image": "Cards\\7dc55a56-a185-47a0-8ecb-b372a4b4ad43_therebedragons_mistymountainscold.png"
+        },
+        {
+            "name": "Bloodlust!",
+            "image": "Cards\\80fb0174-23a1-465b-a29c-73408db8f508_therebedragons_bloodlust.png"
+        },
+        {
+            "name": "Bloodlust!",
+            "image": "Cards\\80fb0174-23a1-465b-a29c-73408db8f508_therebedragons_bloodlust.png"
+        }
+    ]
+}

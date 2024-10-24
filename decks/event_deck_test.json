@@ -1,0 +1,22 @@
+{
+    "type": "event_deck",
+    "original_name": "Event Deck test",
+    "cards": [
+        {
+            "name": "Black Swan",
+            "image": "Cards\\88851cbe-9146-4115-9769-e1c59317561c_event_blackswan.png"
+        },
+        {
+            "name": "Calms of Summer",
+            "image": "Cards\\ac4740c9-8a33-4835-b469-c7f1a4ec14ee_calms_of_summer_wm.png"
+        },
+        {
+            "name": "Black Swan",
+            "image": "Cards\\88851cbe-9146-4115-9769-e1c59317561c_event_blackswan.png"
+        },
+        {
+            "name": "Calms of Summer",
+            "image": "Cards\\ac4740c9-8a33-4835-b469-c7f1a4ec14ee_calms_of_summer_wm.png"
+        }
+    ]
+}

@@ -1,0 +1,46 @@
+{
+    "type": "event_deck",
+    "original_name": "Event Deck-WM",
+    "cards": [
+        {
+            "name": "Deep Snow",
+            "image": "Cards\\c8c301ee-11db-40c7-980c-e81af4bdfa96_deep_snow_wm.png"
+        },
+        {
+            "name": "Black Swan",
+            "image": "Cards\\88851cbe-9146-4115-9769-e1c59317561c_event_blackswan.png"
+        },
+        {
+            "name": "Imarin's Blessing",
+            "image": "Cards\\7c395607-19cc-4515-bc79-815dd0a39fae_event_imarins_blessings.png"
+        },
+        {
+            "name": "Calms of Summer",
+            "image": "Cards\\ac4740c9-8a33-4835-b469-c7f1a4ec14ee_calms_of_summer_wm.png"
+        },
+        {
+            "name": "Power Overwhelming",
+            "image": "Cards\\29137718-a8cc-4a8d-817a-bdd9044ebbde_event_poweroverwhelming.png"
+        },
+        {
+            "name": "Power Overwhelming",
+            "image": "Cards\\29137718-a8cc-4a8d-817a-bdd9044ebbde_event_poweroverwhelming.png"
+        },
+        {
+            "name": "Heavy rains of Autumn",
+            "image": "Cards\\a269b36a-603c-4a45-ae8f-654cba0bdf93_heavy_rains_of_autumn_wm.png"
+        },
+        {
+            "name": "Restlessness of Spring",
+            "image": "Cards\\d8452df2-0de4-4b7c-b961-f935c96fe8c5_event_restlessnessofspring.png"
+        },
+        {
+            "name": "Winter Storms",
+            "image": "Cards\\70e718c6-b0e9-487d-ab37-e481382a4d45_winter_storms_wm.png"
+        },
+        {
+            "name": "Flood!",
+            "image": "Cards\\7341ba86-822b-4687-83cb-e477306da3f8_wm_flood.png"
+        }
+    ]
+}

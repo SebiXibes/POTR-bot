@@ -1,0 +1,18 @@
+{
+    "type": "end_deck",
+    "original_name": "End Deck-WM",
+    "cards": [
+        {
+            "name": "The End is Nigh!",
+            "image": "Cards\\3fd7715e-882e-4291-932a-1cb9553c2b3f_the_end_is_nigh.png"
+        },
+        {
+            "name": "Time's up!",
+            "image": "Cards\\ad4a2908-349d-4992-9ae1-6dac1b1950a9_times_up.png"
+        },
+        {
+            "name": "The End is Nigh!",
+            "image": "Cards\\46d42f08-f75e-4e1e-88fd-d38a576a8764_the_end_is_nigh.png"
+        }
+    ]
+}
