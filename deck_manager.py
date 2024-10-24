@@ -97,10 +97,6 @@ class DeckManager:
             logging.error(f"Attempted to delete non-existent deck '{deck_key}'.")
             return False, "Deck does not exist."
 
-        if self.decks[deck_key]['type'] in predefined_types:
-            logging.warning(f"Attempted to delete predefined deck '{deck_key}'.")
-            return False, f"Cannot delete the predefined deck '{self.decks[deck_key]['original_name']}'."
-
         del self.decks[deck_key]
         try:
             os.remove(os.path.join(self.decks_directory, f"{deck_key}.json"))

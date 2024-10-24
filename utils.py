@@ -1,7 +1,5 @@
 # utils.py
 
-# utils.py
-
 import re
 import os
 import discord
@@ -55,14 +53,6 @@ def admin_or_gamemaster_check(interaction: discord.Interaction) -> bool:
 
 # Register the admin_or_gamemaster_only decorator
 admin_or_gamemaster_only = app_commands.check(admin_or_gamemaster_check)
-
-# Define deck choices for commands
-DECK_CHOICES = [
-    app_commands.Choice(name='Event Deck', value='event_deck'),
-    app_commands.Choice(name='Dragon Deck', value='dragon_deck'),
-    app_commands.Choice(name='Sea Deck', value='sea_deck'),
-    app_commands.Choice(name='End Deck', value='end_deck')
-]
 
 def create_embed(title: str, card: dict) -> Tuple[discord.Embed, Optional[discord.File]]:
     """
