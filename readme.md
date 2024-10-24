@@ -66,16 +66,13 @@ The next recommended steps to further expand bot functionality:
 - **Discord Bot Token**: Create a Discord bot and obtain its token. Follow the [Discord Developer Portal](https://discord.com/developers/applications) to set up your bot.
 
 ### Install Dependencies
-### Install Dependencies
 
 It's recommended to use a virtual environment. recommended is to use a code editor such as visual code, and install the python extension. this allows to easily create virtual environments to projects.
 
 ### Configure the Bot
-### Configure the Bot
 
 Bot Token: Add your Discord bot token to .env file. see the .env.example file as example (rename it to .env with your discord token).
 
-### Decks and Cards:
 ### Decks and Cards:
 Cards are uploaded and deleted via the discord bot. But this can also manually be done by adding corresponding files to the /Cards folder, and updating the /decks/<deck_name>.json files
 
@@ -154,7 +151,7 @@ requirements.txt
 Lists all Python packages and their respective versions required to run the bot. This ensures that the environment is set up correctly with all necessary dependencies.
 
 .env
-Securely stores the Discord bot token. Important: This file should be kept private and excluded from version control systems (e.g., by adding it to .gitignore) to prevent unauthorized access.
+Securely stores the Discord bot token. Important: This file should be kept private and excluded from version control systems (e.g., by adding it to .gitignore) to prevent unauthorized access.see .env.example on how the content should look like. Add your bot token in the example and remove ".example"
 
 turn_manager.py
 Manages the flow of turns within the game, including determining the order of player turns, handling phase transitions, and ensuring that game rules are enforced during each turn.
