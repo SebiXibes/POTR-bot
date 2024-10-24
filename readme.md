@@ -108,14 +108,12 @@ Check Game Status: Use /status to view the current game state.
 
 List Cards in a Deck: Use /listcards with appropriate options to view cards.
 
-/**shuffle**: Shuffles the deck.
-/**draw**: Draws a card from the deck and posts the result in the chat.
 Special handling for a 'Reshuffle Card' that, when drawn, reshuffles the deck and automatically draws the next card.
 /**peek**: Allows an admin to peek at the top card and send the result privately to a specified user via Direct Message (DM).
 /**advancedpeek**: Similar to peek, but the specified user can choose to move the top card to the bottom of the deck via interactive buttons in the DM.
-/**reset**: Resets and shuffles the deck.
 
-and more!
+
+**and more!** (documentation in for future)
 
 ---
 
