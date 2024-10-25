@@ -18,6 +18,21 @@ class DeckManagementCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # General autocomplete method for deck names
+    async def deck_name_autocomplete(self, interaction: discord.Interaction, current: str):
+        """
+        General autocomplete method for deck names.
+        """
+        decks = self.bot.deck_manager.decks
+        current_lower = current.lower().replace(" ", "")
+        suggestions = []
+        for deck_key, deck in decks.items():
+            deck_name = deck['original_name']
+            deck_name_normalized = deck_name.lower().replace(" ", "")
+            if current_lower in deck_name_normalized:
+                suggestions.append(app_commands.Choice(name=deck_name, value=deck_key))
+        return suggestions[:25]  # Limit to 25 suggestions
+
     @app_commands.command(name='createdeck', description='Create a new deck.')
     @admin_only
     @app_commands.describe(deck_name='Name of the new deck')
@@ -66,12 +81,16 @@ class DeckManagementCommands(commands.Cog):
 
     @app_commands.command(name='addcardtodeck', description='Add a card to a specific deck.')
     @admin_only
-    @app_commands.describe(deck_name='Name of the deck', card_name='Name of the card')
-    async def add_card_to_deck(self, interaction: discord.Interaction, deck_name: str, card_name: str):
+    @app_commands.describe(deck_key='Select the deck', card_name='Name of the card')
+    async def add_card_to_deck(self, interaction: discord.Interaction, deck_key: str, card_name: str):
         """
         Command to add a new card to a deck. Admins must upload an image for the card.
         """
-        deck_name = sanitize_input(deck_name)  # Keep sanitization for deck_name
+        if deck_key not in self.bot.deck_manager.decks:
+            await interaction.response.send_message(f"Deck does not exist.", ephemeral=True)
+            return
+
+        deck_name = self.bot.deck_manager.get_original_deck_name(deck_key)
         card_name_original = card_name.strip()  # Preserve original casing and spaces
         await interaction.response.send_message(
             "Please upload the image file for the card as an attachment in your next message.",
@@ -99,14 +118,18 @@ class DeckManagementCommands(commands.Cog):
             image_path = os.path.join('Cards', unique_filename)
             await attachment.save(image_path)
             new_card = {'name': card_name_original, 'image': image_path}
-            success, message = self.bot.deck_manager.add_card_to_deck(deck_name, new_card)
+            success, message = self.bot.deck_manager.add_card_to_deck(deck_key, new_card)
             if success:
-                await interaction.followup.send(f"Card '{card_name_original}' added to deck '{self.bot.deck_manager.get_original_deck_name(deck_name)}'.", ephemeral=True)
+                await interaction.followup.send(f"Card '{card_name_original}' added to deck '{deck_name}'.", ephemeral=True)
                 logging.info(f"{interaction.user} added card '{card_name_original}' to deck '{deck_name}'.")
             else:
                 await interaction.followup.send(f"Failed to add card to deck '{deck_name}': {message}", ephemeral=True)
         except asyncio.TimeoutError:
             await interaction.followup.send("You took too long to upload the image. Please try the command again.", ephemeral=True)
+
+    @add_card_to_deck.autocomplete('deck_key')
+    async def add_card_to_deck_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self.deck_name_autocomplete(interaction, current)
 
     @app_commands.command(name='listdecks', description='List all available decks.')
     async def list_decks(self, interaction: discord.Interaction):
@@ -130,12 +153,11 @@ class DeckManagementCommands(commands.Cog):
             await interaction.response.send_message("No decks are available.", ephemeral=True)
 
     @app_commands.command(name='listcards', description='List all cards in a deck.')
-    @app_commands.describe(deck_name='The name of the deck to list cards from.', display_format='Display format: names or images.')
-    async def list_cards_in_deck(self, interaction: discord.Interaction, deck_name: str, display_format: str = "names"):
+    @app_commands.describe(deck_key='Select the deck', display_format='Display format: names or images.')
+    async def list_cards_in_deck(self, interaction: discord.Interaction, deck_key: str, display_format: str = "names"):
         """Lists all cards in the specified deck."""
-        deck_key = self.bot.deck_manager.get_deck_key(deck_name)
-        if not deck_key:
-            await interaction.response.send_message(f"Deck '{deck_name}' does not exist.", ephemeral=True)
+        if deck_key not in self.bot.deck_manager.decks:
+            await interaction.response.send_message(f"Deck does not exist.", ephemeral=True)
             return
 
         deck = self.bot.deck_manager.decks.get(deck_key)
@@ -176,30 +198,23 @@ class DeckManagementCommands(commands.Cog):
     async def display_format_autocomplete(self, interaction: discord.Interaction, current: str):
         formats = ["names", "images"]
         return [app_commands.Choice(name=fmt, value=fmt) for fmt in formats if fmt.startswith(current.lower())]
-    @list_cards_in_deck.autocomplete('deck_name')
-    async def deck_name_autocomplete(self, interaction: discord.Interaction, current: str):
-        decks = self.bot.deck_manager.decks
-        current_lower = current.lower().replace(" ", "")
-        suggestions = []
-        for deck_key, deck in decks.items():
-            deck_name = deck['original_name']
-            deck_name_normalized = deck_name.lower().replace(" ", "")
-            if current_lower in deck_name_normalized:
-                suggestions.append(app_commands.Choice(name=deck_name, value=deck_name))
-        return suggestions[:25]  # Limit to 25 suggestions            
-    
+
+    @list_cards_in_deck.autocomplete('deck_key')
+    async def list_cards_in_deck_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self.deck_name_autocomplete(interaction, current)
+
     @app_commands.command(name='deletedeck', description='Delete a custom deck.')
     @admin_only
-    @app_commands.describe(deck_name='Name of the deck to delete')
-    async def delete_deck(self, interaction: discord.Interaction, deck_name: str):
+    @app_commands.describe(deck_key='Select the deck to delete')
+    async def delete_deck(self, interaction: discord.Interaction, deck_key: str):
         """
         Command to delete a custom deck. Predefined decks cannot be deleted.
         """
-        deck_name = sanitize_input(deck_name)
-        deck_exists = deck_name in self.bot.deck_manager.decks
-        if not deck_exists:
-            await interaction.response.send_message(f"Deck '{deck_name}' does not exist.", ephemeral=True)
+        if deck_key not in self.bot.deck_manager.decks:
+            await interaction.response.send_message(f"Deck does not exist.", ephemeral=True)
             return
+
+        deck_name = self.bot.deck_manager.get_original_deck_name(deck_key)
 
         # Confirmation view
         class ConfirmDeleteView(discord.ui.View):
@@ -209,7 +224,7 @@ class DeckManagementCommands(commands.Cog):
 
             @discord.ui.button(label='Confirm', style=discord.ButtonStyle.danger)
             async def confirm(self, interaction_button: discord.Interaction, button: discord.ui.Button):
-                success, response = self.bot.deck_manager.delete_deck(deck_name)
+                success, response = self.bot.deck_manager.delete_deck(deck_key)
                 if success:
                     await interaction_button.response.send_message(f"Deck '{deck_name}' deleted successfully.", ephemeral=True)
                     logging.info(f"{interaction_button.user} deleted deck '{deck_name}'.")
@@ -228,20 +243,24 @@ class DeckManagementCommands(commands.Cog):
 
         view = ConfirmDeleteView(self.bot)
         await interaction.response.send_message(f"Are you sure you want to delete the deck '{deck_name}'?", view=view, ephemeral=True)
+
+    @delete_deck.autocomplete('deck_key')
+    async def delete_deck_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self.deck_name_autocomplete(interaction, current)
     
     @app_commands.command(name='removecard', description='Remove a card from a specific deck.')
     @admin_only
-    @app_commands.describe(deck_name='Name of the deck', card_name='Name of the card to remove')
-    async def remove_card_from_deck(self, interaction: discord.Interaction, deck_name: str, card_name: str):
+    @app_commands.describe(deck_key='Select the deck', card_name='Name of the card to remove')
+    async def remove_card_from_deck(self, interaction: discord.Interaction, deck_key: str, card_name: str):
         """
         Command to remove a card from a deck.
         """
-        deck_key = self.bot.deck_manager.get_deck_key(deck_name)
-        if not deck_key:
-            await interaction.response.send_message(f"Deck '{deck_name}' does not exist.", ephemeral=True)
+        if deck_key not in self.bot.deck_manager.decks:
+            await interaction.response.send_message(f"Deck does not exist.", ephemeral=True)
             return
 
-        card_name_original = card_name.strip()
+        deck_name = self.bot.deck_manager.get_original_deck_name(deck_key)
+        card_name_original = card_name.strip()  # Preserve original casing and spaces
         success, message, image_path = self.bot.deck_manager.remove_card_from_deck(deck_key, card_name_original)
         if success:
             # Optionally, delete the image file
@@ -251,3 +270,20 @@ class DeckManagementCommands(commands.Cog):
             await interaction.response.send_message(message, ephemeral=True)
         else:
             await interaction.response.send_message(message, ephemeral=True)
+
+    @remove_card_from_deck.autocomplete('deck_key')
+    async def remove_card_from_deck_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self.deck_name_autocomplete(interaction, current)
+
+    @remove_card_from_deck.autocomplete('card_name')
+    async def remove_card_from_deck_card_name_autocomplete(self, interaction: discord.Interaction, current: str):
+        deck_key = interaction.namespace.deck_key
+        suggestions = []
+        if deck_key and deck_key in self.bot.deck_manager.decks:
+            deck = self.bot.deck_manager.decks[deck_key]
+            current_lower = current.lower()
+            for card in deck['cards']:
+                card_name = card['name']
+                if current_lower in card_name.lower():
+                    suggestions.append(app_commands.Choice(name=card_name, value=card_name))
+        return suggestions[:25]
