@@ -176,9 +176,9 @@ class DeckManager:
         """
         Returns the deck key corresponding to the provided deck name, ignoring case and spaces.
         """
-        deck_name_normalized = deck_name.lower().replace(" ", "")
+        deck_name_normalized = sanitize_input(deck_name)
         for key, deck in self.decks.items():
-            original_name_normalized = deck['original_name'].lower().replace(" ", "")
+            original_name_normalized = sanitize_input(deck['original_name'])
             if deck_name_normalized == original_name_normalized:
                 return key
         return None

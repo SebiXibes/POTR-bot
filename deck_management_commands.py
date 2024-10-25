@@ -236,9 +236,13 @@ class DeckManagementCommands(commands.Cog):
         """
         Command to remove a card from a deck.
         """
-        deck_name = sanitize_input(deck_name)
-        card_name_original = card_name.strip()  # Preserve original casing and spaces
-        success, message, image_path = self.bot.deck_manager.remove_card_from_deck(deck_name, card_name_original)
+        deck_key = self.bot.deck_manager.get_deck_key(deck_name)
+        if not deck_key:
+            await interaction.response.send_message(f"Deck '{deck_name}' does not exist.", ephemeral=True)
+            return
+
+        card_name_original = card_name.strip()
+        success, message, image_path = self.bot.deck_manager.remove_card_from_deck(deck_key, card_name_original)
         if success:
             # Optionally, delete the image file
             if image_path and os.path.exists(image_path):
