@@ -137,7 +137,7 @@ class PeekCommands(commands.Cog):
                     else:
                         await user.send(embed=embed)
                     await interaction.followup.send(f"Peeked card has been sent to {user.mention}.", ephemeral=True)
-                    logging.info(f"{interaction.user} sent an unmovable card '{card['name']}' to {user}.")
+                    logging.info(f"{interaction.user} sent the top card of the {deck_key} to {user}.")
                 else:
                     # Check for existing CardAction
                     card_action = game_state.pending_card_actions.get(deck_key)
@@ -291,7 +291,7 @@ class PeekCommands(commands.Cog):
                 if top_card == self.card_action.card:
                     game_state.draw_piles[deck_name].pop()  # Remove the top card
                     game_state.draw_piles[deck_name].insert(0, top_card)  # Insert it at the bottom
-                    logging.info(f"The card '{top_card['name']}' has been moved to the bottom of the {deck_name.replace('_', ' ').title()}.")
+                    logging.info("Action performed and recorded")
                 else:
                     logging.warning("The top card has changed; action cannot be performed.")
 
@@ -400,7 +400,6 @@ class PeekCommands(commands.Cog):
                     # If found, place it on top
                     if dragon_card:
                         game_state.draw_piles[deck_name].append(dragon_card)
-                        logging.info("A copy of 'There be Dragons!' has been added to the top of the draw pile.")
                     else:
                         logging.warning("Could not find 'There be Dragons!' to replace the top card.")
                 else:
