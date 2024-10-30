@@ -30,7 +30,6 @@ class TurnManager(commands.Cog):
         await interaction.response.defer(ephemeral=False)
 
         try:
-            
             # Check if the game should end before processing the turn
             if game_state.end_game_flag:
                 # Inform the user that the game has ended
@@ -38,6 +37,12 @@ class TurnManager(commands.Cog):
                 await interaction.followup.send("**Game Over!** The game has ended.", ephemeral=False)
                 logging.info(f"Game ended in channel {interaction.channel_id} after 'Time's Up!' was drawn.")
                 return  # Do not process any further turns
+
+            # Handle active views before advancing the turn
+            active_views = game_state.active_views[:]
+            for view in active_views:
+                await view.on_turn_end()
+            game_state.active_views.clear()
 
             # Advance to the next turn before processing
             game_state.advance_turn()
@@ -50,6 +55,7 @@ class TurnManager(commands.Cog):
         except Exception as e:
             logging.error(f"An unexpected error occurred during next_turn: {e}", exc_info=True)
             await interaction.followup.send("An error occurred while processing the next turn.", ephemeral=True)
+
 
     async def process_turn(self, interaction: discord.Interaction, game_state: GameState):
         """Processes the current turn."""

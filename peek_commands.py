@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord import app_commands
 import logging
 from typing import Optional, Tuple, Dict
-from game_state import GameState
+from game_state import GameState, CardAction
 from utils import admin_or_gamemaster_only, create_embed
 
 class PeekCommands(commands.Cog):
@@ -139,8 +139,16 @@ class PeekCommands(commands.Cog):
                     await interaction.followup.send(f"Peeked card has been sent to {user.mention}.", ephemeral=True)
                     logging.info(f"{interaction.user} sent an unmovable card '{card['name']}' to {user}.")
                 else:
+                    # Check for existing CardAction
+                    card_action = game_state.pending_card_actions.get(deck_key)
+                    if not card_action or card_action.card != card:
+                        # Create new CardAction
+                        card_action = CardAction(card)
+                        game_state.pending_card_actions[deck_key] = card_action
+
                     # Create buttons for interaction
-                    view = self.ConfirmView(user, interaction.user, interaction.channel, game_state, deck_key)
+                    view = self.ConfirmView(user, interaction.user, interaction.channel, game_state, deck_key, card_action)
+                    card_action.views.append(view)
                     embed.add_field(name="Question", value="Do you want to move this card to the bottom of the deck?")
                     if file:
                         await user.send(embed=embed, file=file, view=view)
@@ -166,8 +174,16 @@ class PeekCommands(commands.Cog):
                 embed, file = create_embed(title, card)
 
                 if card['name'].lower() != "there be dragons!":
+                    # Check for existing CardAction
+                    card_action = game_state.pending_card_actions.get(deck_key)
+                    if not card_action or card_action.card != card:
+                        # Create new CardAction
+                        card_action = CardAction(card)
+                        game_state.pending_card_actions[deck_key] = card_action
+
                     # Create buttons for interaction
-                    view = self.DragonPeekView(user, interaction.user, interaction.channel, game_state, deck_key, card)
+                    view = self.DragonPeekView(user, interaction.user, interaction.channel, game_state, deck_key, card, card_action)
+                    card_action.views.append(view)
                     embed.add_field(name="Option", value="Do you want to destroy this card and replace it with a copy of 'There be Dragons!'?")
                     if file:
                         await user.send(embed=embed, file=file, view=view)
@@ -194,137 +210,201 @@ class PeekCommands(commands.Cog):
         A View that presents buttons to confirm moving the top card to the bottom (now only used by advanced peek)
         """
 
-        def __init__(self, user: discord.Member, admin_user: discord.Member, channel: discord.TextChannel, game_state: GameState, deck_key: str):
-            super().__init__(timeout=60)  # Timeout after 60 seconds
+        def __init__(self, user: discord.Member, admin_user: discord.Member, channel: discord.TextChannel, game_state: GameState, deck_key: str, card_action: CardAction):
+            super().__init__(timeout=None)  # No fixed timeout
             self.user = user
             self.admin_user = admin_user
             self.channel = channel
             self.game_state = game_state
             self.deck_key = deck_key
+            self.card_action = card_action
+            self.game_state.active_views.append(self)  # Register the view with the game state
 
         @discord.ui.button(label='Yes', style=discord.ButtonStyle.green)
         async def yes(self, interaction_button: discord.Interaction, button: discord.ui.Button):
             """Handles the 'Yes' button press."""
-            # Move the card to the bottom
-            result = self.move_top_card_to_bottom(self.game_state, self.deck_key)
+            if not self.card_action.action_performed:
+                # Perform the action
+                self.move_top_card_to_bottom(self.game_state, self.deck_key)
+                self.card_action.action_performed = True
+            # Send confirmation message
             try:
-                await self.user.send(result)
+                await self.user.send("Your choice has been recorded and the card was moved to the bottom of the draw pile.")
             except discord.Forbidden:
-                # User might have DMs disabled; handle gracefully
                 pass
             # Send an ephemeral confirmation to the user interacting with the button
-            await interaction_button.response.send_message("Your choice has been recorded.", ephemeral=True)
+            await interaction_button.response.send_message("Your choice has been recorded and the card was moved to the bottom of the draw pile.", ephemeral=True)
+            try:
+                await self.admin_user.send(f"{self.user.display_name} made his choice regarding the advanced peek in {self.channel.mention}.")
+            except discord.Forbidden:
+                pass
             self.stop()
 
         @discord.ui.button(label='No', style=discord.ButtonStyle.red)
         async def no(self, interaction_button: discord.Interaction, button: discord.ui.Button):
             """Handles the 'No' button press."""
-            message = "Card remains at the top of the deck."
+            message = "Your choice has been recorded."
             try:
                 await self.user.send(message)
             except discord.Forbidden:
-                # User might have DMs disabled; handle gracefully
                 pass
-            await interaction_button.response.send_message("Your choice has been recorded and the card remains on the top.", ephemeral=True)
+            await interaction_button.response.send_message("Your choice has been recorded and the card remains on top.", ephemeral=True)
+            try:
+                await self.admin_user.send(f"{self.user.display_name} made his choice regarding the advanced peek in {self.channel.mention}.")
+            except discord.Forbidden:
+                pass
             self.stop()
 
-        async def on_timeout(self):
-            """Handles the timeout for the View."""
-            message = "You took too long to respond. The card remains at the top of the deck."
+        async def on_turn_end(self):
+            """Handles the view when the turn ends."""
+            message = "The turn has ended. You took too long to respond. The card remains on top of the deck."
             try:
                 await self.user.send(message)
             except discord.Forbidden:
                 pass
-            # Notify the admin or game master about the timeout
             try:
-                await self.admin_user.send(f"{self.user.display_name} did not respond in time to the advanced peek in {self.channel.mention}.")
+                await self.admin_user.send(f"{self.user.display_name} made his choice regarding the advanced peek in {self.channel.mention}.")
             except discord.Forbidden:
                 pass
+            self.stop()
 
-        #Method to peak at top cards, used by advanced peek commands (event deck only)
-        def move_top_card_to_bottom(self, game_state: GameState, deck_name: str) -> str:
+        def stop(self):
+            """Stops the view and removes it from the game state's active views."""
+            super().stop()
+            if self in self.game_state.active_views:
+                self.game_state.active_views.remove(self)
+            if self in self.card_action.views:
+                self.card_action.views.remove(self)
+            # If all views are done, remove the pending action
+            if not self.card_action.views:
+                if self.game_state.pending_card_actions.get(self.deck_key) == self.card_action:
+                    del self.game_state.pending_card_actions[self.deck_key]
+
+
+        # Method to move top card to bottom, used by advanced peek commands (event deck only)
+        def move_top_card_to_bottom(self, game_state: GameState, deck_name: str) -> None:
             """
-            Moves the top card of the specified deck to the bottom.
+            Moves the top card of the specified deck to the bottom if it's the same as the original card.
             """
             if deck_name in game_state.draw_piles and game_state.draw_piles[deck_name]:
-                card = game_state.draw_piles[deck_name].pop()  # Remove the top card
-                game_state.draw_piles[deck_name].insert(0, card)  # Insert it at the bottom
-                return f"The card '{card['name']}' has been moved to the bottom of the {deck_name.replace('_', ' ').title()}."
-            else:
-                return "No cards left in the deck to move."
-                
-    #handles action for user of advanced dragon peek    
+                top_card = game_state.draw_piles[deck_name][-1]  # Get the top card
+                if top_card == self.card_action.card:
+                    game_state.draw_piles[deck_name].pop()  # Remove the top card
+                    game_state.draw_piles[deck_name].insert(0, top_card)  # Insert it at the bottom
+                    logging.info(f"The card '{top_card['name']}' has been moved to the bottom of the {deck_name.replace('_', ' ').title()}.")
+                else:
+                    logging.warning("The top card has changed; action cannot be performed.")
+
+    # Handles action for user of advanced dragon peek
     class DragonPeekView(discord.ui.View):
         """
-        A View for advanced dragon peek, allowing the user to destroy the top card of the draw pile and replace it with a 'There be Dragons card'.
+        A View for advanced dragon peek, allowing the user to destroy the top card of the draw pile and replace it with a 'There be Dragons!' card.
         """
 
-        def __init__(self, user: discord.Member, admin_user: discord.Member, channel: discord.TextChannel, game_state: GameState, deck_key: str, original_card: dict):
-            super().__init__(timeout=60)
+        def __init__(self, user: discord.Member, admin_user: discord.Member, channel: discord.TextChannel, game_state: GameState, deck_key: str, original_card: dict, card_action: CardAction):
+            super().__init__(timeout=None)  # No fixed timeout
             self.user = user
             self.admin_user = admin_user
             self.channel = channel
             self.game_state = game_state
             self.deck_key = deck_key
             self.original_card = original_card
+            self.card_action = card_action
+            self.game_state.active_views.append(self)  # Register the view with the game state
 
         @discord.ui.button(label='Yes', style=discord.ButtonStyle.green)
         async def yes(self, interaction_button: discord.Interaction, button: discord.ui.Button):
             """Handles the 'Yes' button press."""
-            # Remove the top card (without putting it in the discard pile), ie destroying it
-            self.game_state.draw_piles[self.deck_key].pop()
-
-            # Find a copy of the 'There be Dragons!' card in the draw pile
-            dragon_card = None
-            # Search in draw pile
-            for card in self.game_state.draw_piles[self.deck_key]:
-                if card['name'].lower() == "there be dragons!":
-                    dragon_card = card
-                    break
-            # If not found, search in discard pile
-            if not dragon_card:
-                for card in self.game_state.discard_piles[self.deck_key]:
-                    if card['name'].lower() == "there be dragons!":
-                        dragon_card = card
-                        break
-            # If found, create a copy and put it on top of the draw pile
-            if dragon_card:
-                self.game_state.draw_piles[self.deck_key].append(dragon_card)
-                result_message = "A copy of the 'There be Dragons!' card has been added to the top of the draw pile."
-            else:
-                result_message = "Could not find an original 'There be Dragons!' card in the deck to copy."
-
-            # Inform the user
+            if not self.card_action.action_performed:
+                # Perform the action
+                self.replace_top_card_with_dragon(self.game_state, self.deck_key)
+                self.card_action.action_performed = True
+            # Send confirmation message
             try:
-                await self.user.send(result_message)
+                await self.user.send("Your choice has been recorded, prepare to spread chaos.")
             except discord.Forbidden:
                 pass
-            await interaction_button.response.send_message("Your choice has been recorded.", ephemeral=True)
+            await interaction_button.response.send_message("Your choice has been recorded, prepare to spread chaos.", ephemeral=True)
+            self.stop() 
+            try:
+                await self.admin_user.send(f"{self.user.display_name} made his choice regarding the advanced dragon peek in {self.channel.mention}.")
+            except discord.Forbidden:
+                pass
             self.stop()
 
         @discord.ui.button(label='No', style=discord.ButtonStyle.red)
         async def no(self, interaction_button: discord.Interaction, button: discord.ui.Button):
             """Handles the 'No' button press."""
-            message = "No changes have been made to the Dragon Deck."
+            message = "Your choice has been recorded."
             try:
                 await self.user.send(message)
             except discord.Forbidden:
                 pass
-            await interaction_button.response.send_message("Your choice has been recorded.", ephemeral=True)
+            await interaction_button.response.send_message("Your choice has been recorded; you will not plunge the realm in chaos .", ephemeral=True)
+            try:
+                await self.admin_user.send(f"{self.user.display_name} made his choice regarding the advanced dragon peek in {self.channel.mention}.")
+            except discord.Forbidden:
+                pass
             self.stop()
 
-        async def on_timeout(self):
-            """Handles the timeout for the View."""
-            message = "You took too long to respond. No changes have been made."
+        async def on_turn_end(self):
+            """Handles the view when the turn ends."""
+            message = "The turn has ended. You took too long to respond. No changes have been made."
             try:
                 await self.user.send(message)
             except discord.Forbidden:
                 pass
             # Notify the admin or game master about the timeout
+            #example send confirmation to admin
             try:
-                await self.admin_user.send(f"{self.user.display_name} did not respond in time to the advanced dragon peek in {self.channel.mention}.")
+                await self.admin_user.send(f"{self.user.display_name} made his choice regarding the advanced dragon peek in {self.channel.mention}.")
             except discord.Forbidden:
                 pass
+            self.stop()
+
+        def stop(self):
+            """Stops the view and removes it from the game state's active views."""
+            super().stop()
+            if self in self.game_state.active_views:
+                self.game_state.active_views.remove(self)
+            if self in self.card_action.views:
+                self.card_action.views.remove(self)
+            # If all views are done, remove the pending action
+            if not self.card_action.views:
+                if self.game_state.pending_card_actions.get(self.deck_key) == self.card_action:
+                    del self.game_state.pending_card_actions[self.deck_key]
+                    
+        def replace_top_card_with_dragon(self, game_state: GameState, deck_name: str) -> None:
+            """
+            Replaces the top card with a 'There be Dragons!' card if possible.
+            """
+            if deck_name in game_state.draw_piles and game_state.draw_piles[deck_name]:
+                top_card = game_state.draw_piles[deck_name][-1]  # Get the top card
+                if top_card == self.card_action.card:
+                    # Remove the top card
+                    game_state.draw_piles[deck_name].pop()
+
+                    # Find a 'There be Dragons!' card
+                    dragon_card = None
+                    # Search in draw pile
+                    for card in game_state.draw_piles[deck_name]:
+                        if card['name'].lower() == "there be dragons!":
+                            dragon_card = card
+                            break
+                    # If not found, search in discard pile
+                    if not dragon_card:
+                        for card in game_state.discard_piles[deck_name]:
+                            if card['name'].lower() == "there be dragons!":
+                                dragon_card = card
+                                break
+                    # If found, place it on top
+                    if dragon_card:
+                        game_state.draw_piles[deck_name].append(dragon_card)
+                        logging.info("A copy of 'There be Dragons!' has been added to the top of the draw pile.")
+                    else:
+                        logging.warning("Could not find 'There be Dragons!' to replace the top card.")
+                else:
+                    logging.warning("The top card has changed; action cannot be performed.")
 
     #Method to peak at top cards, used by all peek commands.
     def peek_top_card(self, game_state: GameState, deck_name: str) -> Optional[Tuple[Dict[str, str], str]]:

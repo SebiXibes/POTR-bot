@@ -1,9 +1,16 @@
 # game_state.py
 
+import discord
 import random
 import logging
 from typing import List, Dict, Tuple, Optional
 from deck_manager import DeckManager
+
+class CardAction:
+    def __init__(self, card):
+        self.card = card
+        self.action_performed = False
+        self.views = []
 
 class GameState:
     """
@@ -12,16 +19,18 @@ class GameState:
     """
 
     def __init__(self, channel_id: int, deck_keys: List[str], deck_manager: DeckManager):
-        self.channel_id = channel_id # In which channel the game is taking place
+        self.channel_id = channel_id  # In which channel the game is taking place
         self.deck_manager = deck_manager
         self.all_deck_keys = deck_keys  # All decks used in the game
-        self.draw_piles: Dict[str, List[Dict[str, str]]] = {} #List of cards in the draw pile
-        self.discard_piles: Dict[str, List[Dict[str, str]]] = {} # List of cards in the discard piles
+        self.draw_piles: Dict[str, List[Dict[str, str]]] = {}  # List of cards in the draw pile
+        self.discard_piles: Dict[str, List[Dict[str, str]]] = {}  # List of cards in the discard piles
         self.current_turn: int = 1  # Initialize to turn 1
-        self.keep_cards: List[Tuple[Dict[str, str], str]] = [] # List of cards & decks kept from previous turn
-        self.keep_current_turn_cards: bool = False #whether end is nigh! is active
-        self.current_turn_drawn_cards: List[Tuple[Dict[str, str], str]] = [] #List of cards currently in play
-        self.end_game_flag: bool = False #Whether this is the last turn
+        self.keep_cards: List[Tuple[Dict[str, str], str]] = []  # List of cards & decks kept from previous turn
+        self.keep_current_turn_cards: bool = False  # Whether 'The End is Nigh!' is active
+        self.current_turn_drawn_cards: List[Tuple[Dict[str, str], str]] = []  # List of cards currently in play
+        self.end_game_flag: bool = False  # Whether this is the last turn
+        self.active_views: List[discord.ui.View] = []  # List of active views awaiting user input
+        self.pending_card_actions: Dict[str, CardAction] = {}  # Tracks pending actions on top cards
 
         for deck_key in self.all_deck_keys:
             deck_info = self.deck_manager.decks.get(deck_key)
