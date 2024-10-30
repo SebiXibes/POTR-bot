@@ -8,6 +8,7 @@ Welcome to the **Discord Protectors of the Realm Card Game Bot**! This POTR-bot 
 ## Key Components and Features
 **Deck Management**
 Deck Types: The bot supports predefined deck types such as event_deck, dragon_deck, sea_deck, and end_deck.
+
 **CRUD Operations:**
 Create/Delete Deck: Admins can create/delete new decks, specifying their type. 
 Add/Remove Cards: Admins can add cards to decks by specifying the card name and uploading an associated image. Cards can also be removed based on their names.
@@ -54,7 +55,8 @@ The next recommended steps to further expand bot functionality:
 - **Game Control:** Start games, manage  turns, and monitor game status.
 - **Card Interaction:** Peek at top cards, send cards via DM, and handle special card mechanics.
 - **Persistent Game States:** Maintains game progress across bot restarts using persistent storage.
-- **Admin Commands:** Exclusive commands for admins to manage game flow and decks.
+- **Admin & Game Master Commands:** Exclusive commands for admins to manage decks, and admin / game masters to manage games.
+- **Player interaction:** Player get DMs sent by the bot for the Kelu'ak abilities (peek commands). Players can also check the contents of (fresh) decks using the appropriate deck commands.
 - **User-Friendly UI:** Interactive Discord UI components like buttons for enhanced user experience.
 - **Robust Logging:** Comprehensive logging for monitoring bot activities and debugging.
 
@@ -62,7 +64,7 @@ The next recommended steps to further expand bot functionality:
 
 ### Prerequisites
 
-- **Python 3.8+**: Ensure you have Python installed. You can download it [here](https://www.python.org/downloads/).
+- **Python 3.8+**: Ensure you have Python installed. You can download it [here](https://www.python.org/downloads/). (Was Developed on Python 3.12.3. Newer python versions were not compatible with discord library at time of testing (3.13)
 - **Discord Bot Token**: Create a Discord bot and obtain its token. Follow the [Discord Developer Portal](https://discord.com/developers/applications) to set up your bot.
 
 ### Install Dependencies
@@ -71,7 +73,7 @@ It's recommended to use a virtual environment. recommended is to use a code edit
 
 ### Configure the Bot
 
-Bot Token: Add your Discord bot token to .env file. see the .env.example file as example (rename it to .env with your discord token).
+Bot Token: Add your Discord bot token to .env file. see the .env.example file as example (rename it to .env and include your discord token).
 
 ### Decks and Cards:
 Cards are uploaded and deleted via the discord bot. But this can also manually be done by adding corresponding files to the /Cards folder, and updating the /decks/<deck_name>.json files
@@ -93,24 +95,25 @@ The bot should now be online and ready to use in your Discord server.
 "The End is Nigh!": When drawn, this card ensures that all other cards remain in play until the game concludes, effectively retaining their state across turns.
 "Time's Up!": Triggers the game to end after the current turn, enforcing game termination based on in-game events.
 
-**Peeking.** Mechanics that allows the admin/GM to instruct the bot to send a card via DM to a specified player. This is basically the Kelu'ak ability. The peek command works on the Event Deck. The admin does not get to see the contents of the card, only that sending has been succesful. 'Advanced peek' allows the player who peeked at the card to place it at the bottom of the draw pile. Dragon peek allows the targeted player to look at the dragon deck. advanced dragon peek lets the player discard a non attack card and replace it with an attack card.
+**Peeking.** Mechanics that allows the admin/GM to instruct the bot to send a card via DM to a specified player. This is basically the Kelu'ak ability. The peek command works on the Event Deck. The admin does not get to see the contents of the card, only that sending has been succesful. 'Advanced peek' allows the player who peeked at the card to place it at the bottom of the draw pile. Dragon peek allows the targeted player to look at the dragon deck. advanced dragon peek lets the player discard a non attack card and replace it with an attack card. When two players peek simultaneously, there is special mechanics that deals with how this is resolved.
  
-**The "Black Swan" card.** This card will initiate the bot to shuffle the deck and draw a new card in the same turn. Special care was taken to make sure it works in tandem with the end is nigh! card
+**The "Black Swan" card.** This card will initiate the bot to shuffle the deck and draw a new card in the same turn. Special care was taken to make sure it works in tandem with the end is nigh! card.
 
 
 ---
 ## Usage
-Start a Game: Use /startgame to initiate a new game.
+Start a Game: Use **/startgame** to initiate a new game.
 
-Advance Turns: Use /nextturn to proceed to the next turn.
+Advance Turns: Use **/nextturn** to proceed to the next turn.
 
-Check Game Status: Use /status to view the current game state.
+Check Game Status: Use **/status** to view the current game state.
 
-List Cards in a Deck: Use /listcards with appropriate options to view cards.
+List Cards in a Deck: Use **/listcards** with appropriate options to view cards.
 
-Special handling for a 'Reshuffle Card' that, when drawn, reshuffles the deck and automatically draws the next card.
-/**peek**: Allows an admin to peek at the top card and send the result privately to a specified user via Direct Message (DM).
+/**peek**: Allows an admin to send the top card of the event deck privately to a specified user via Direct Message (DM). The admin only gets confirmation that the peek was successful, but not what the card is
 /**advancedpeek**: Similar to peek, but the specified user can choose to move the top card to the bottom of the deck via interactive buttons in the DM.
+/**dragonpeek**: Allows an admin to send the top card of the dragon deck privately to a specified user via Direct Message (DM). The admin only gets confirmation that the dragonpeek was successful, but not what the card is
+/**advanceddragonpeek**: Similar to dragonpeek, but the specified user can choose to destroy the non-attack card and replace it with a There be dragons! card.
 
 
 **and more!** (documentation in for future)
