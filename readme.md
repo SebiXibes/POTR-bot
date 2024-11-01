@@ -64,12 +64,13 @@ The next recommended steps to further expand bot functionality:
 
 ### Prerequisites
 
-- **Python 3.8+**: Ensure you have Python installed. You can download it [here](https://www.python.org/downloads/). (Was Developed on Python 3.12.3. Newer python versions were not compatible with discord library at time of testing (3.13)
+- **Python 3.8+**: Ensure you have Python installed. You can download it [here](https://www.python.org/downloads/). (Was Developed on Python 3.12.3. Newer python versions were not compatible with discord library at time of testing (i.e. python v3.13)
 - **Discord Bot Token**: Create a Discord bot and obtain its token. Follow the [Discord Developer Portal](https://discord.com/developers/applications) to set up your bot.
 
 ### Install Dependencies
 
-It's recommended to use a virtual environment. recommended is to use a code editor such as visual code, and install the python extension. this allows to easily create virtual environments to projects.
+It's recommended to use a virtual environment. Use a code editor such as visual code, and install the python extension. this allows to easily create virtual environments to projects.
+'requirements.txt' list the packages that are needed to be installed using the command in the project terminal: py -m pip install -r requirements.txt
 
 ### Configure the Bot
 
